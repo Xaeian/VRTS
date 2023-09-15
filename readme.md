@@ -1,4 +1,6 @@
-A Tiny library **VRTS** using the _cooperative multitasking_ method to write multi-threaded applications as simple as possible for STM32 microcontrollers with cores M4, M3, CM0+. It can be an alternative to an **RTOS** (Real-Time Operating System), in which thread switching occurs at fixed time intervals. In VRTS (Virtual Real-Time System), individual threads determine when to release work, providing us with greater control over the program and resulting in safer code.
+![baner](img/baner.png)
+
+A Tiny library [**VRTS**](src/) _(Voluntary Release Threads System)_ using the _cooperative multitasking_ method to write multi-threaded applications as simple as possible for STM32 microcontrollers with cores M4, M3, CM0+. It can be an alternative to an **RTOS** (Real-Time Operating System), in which thread switching occurs at fixed time intervals. In [VRTS](src/) , individual threads determine when to release work, providing us with greater control over the program and resulting in safer code.
 
 | RTOS                  | VRTS                  |
 | --------------------- | --------------------- |
@@ -171,7 +173,7 @@ static void Thread_1(void)
 {
   while(1) {
     for(int i = 0; i < 8; i++) {
-      GPIOA->ODR ^= (1 << 5); // toggle LED (blinking)
+      GPIOA->ODR ^= (1 << 5); // PA5 toggle LED (blinking)
       sleep(250); // 4 x 250ms
     }
     let();
@@ -182,7 +184,7 @@ static void Thread_2(void)
 {
   while(1) {
     for(int i = 0; i < 14; i++) {
-      GPIOA->ODR ^= (1 << 5); // toggle LED (blinking)
+      GPIOA->ODR ^= (1 << 5); // PA5 toggle LED (blinking)
       sleep(100); // 7 x 100ms
     }
     let();
@@ -193,7 +195,7 @@ static void Thread_3(void)
 {
   while(1) {
     for(int i = 0; i < 4; i++) {
-      GPIOA->ODR ^= (1 << 5); // toggle LED (blinking)
+      GPIOA->ODR ^= (1 << 5); // PA5 toggle LED (blinking)
       sleep(500); // 2 x 500ms
     }
     let();
