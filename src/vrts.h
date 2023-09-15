@@ -1,6 +1,7 @@
 #ifndef VRTS_H
 #define VRTS_H
 
+#include "main.h" // for overwriting defines
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>

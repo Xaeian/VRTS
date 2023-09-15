@@ -1,4 +1,8 @@
-A Tiny library **VRTS** using the _cooperative multitasking_ method to write multi-threaded applications as simple as possible for STM32 microcontrollers with cores M4, M3, CM0+. It can be an alternative to **RTOS**.
+A Tiny library **VRTS** using the _cooperative multitasking_ method to write multi-threaded applications as simple as possible for STM32 microcontrollers with cores M4, M3, CM0+. It can be an alternative to an **RTOS** (Real-Time Operating System), in which thread switching occurs at fixed time intervals. In VRTS (Virtual Real-Time System), individual threads determine when to release work, providing us with greater control over the program and resulting in safer code.
+
+| RTOS                  | VRTS                  |
+| --------------------- | --------------------- |
+| ![rtos](img/rtos.png) | ![rtos](img/vrts.png) |
 
 # Functions
 
@@ -22,7 +26,7 @@ void UART_Thread(void)
     char *msg;
     size_t len = UART_Read(msg);
     if(len) {
-    // message handling
+      // message handling
     }
     let();
   }
@@ -66,7 +70,7 @@ You can combine `gettick` and `waitfor` to execute a task with a delay
 This allows for delay-triggering operations between threads
 
 ```c
-uint64_t todo; 
+uint64_t todo;
 void Thread_1(void)
 {
   if(!todo) todo = gettick(500); // 500ms
@@ -75,14 +79,14 @@ void Thread_2(void)
 {
    if(waitfor(&todo)) {
    // todo job
-  }  
+  }
 }
 ```
 
 It is possible to monitor the execution time of the code. To do this, use the `gettick` function in conjunction with `watch`.
 
 ```c
-uint64_t stopwatch; 
+uint64_t stopwatch;
 void Thread(void)
 {
   stopwatch = gettick(0); // no-offset
@@ -97,6 +101,7 @@ Development work can be carried out on a single thread
 
 ```c
 #define VRTS_SWITCHING 0
+
 int main(void) {
   ROOT_Init(&root);
   SYSTICK_Init(10);
@@ -113,17 +118,24 @@ and eventually all threads can be transferred to the system.
 
 ```c
 #define VRTS_SWITCHING 1
-  int main(void) {
+
+static uint32_t main_stack[128];
+static uint32_t temp_stack[128];
+static uint32_t adc_stack[128];
+static uint32_t fan_stack[128];
+static uint32_t fuse_stack[128];
+
+int main(void) {
   ROOT_Init(&root);
   SYSTICK_Init(10);
   thread(MAIN_Thread, main_stack, sizeof(main_stack));
-  thread(MAIN_Thread, main_stack, sizeof(main_stack));
-  thread(ADC_Thread, main_stack, sizeof(main_stack));
-  thread(FAN_Thread, main_stack, sizeof(main_stack));
-  thread(FUSE_Thread, main_stack, sizeof(main_stack));
+  thread(TEMP_Thread, temp_stack, sizeof(temp_stack));
+  thread(ADC_Thread, adc_stack, sizeof(adc_stack));
+  thread(FAN_Thread, fan_stack, sizeof(fan_stack));
+  thread(FUSE_Thread, fuse_stack, sizeof(fuse_stack));
   VRST_Init();
   while(1);
-  }
+}
 ```
 
 # Examples
@@ -139,15 +151,15 @@ static void Thread_1(void);
 static void Thread_2(void);
 static void Thread_3(void);
 
-GPIO_t led = { .port = GPIOA, .pin = 5, .mode = GPIO_Mode_Output };
-
 static uint32_t stack_1[128];
 static uint32_t stack_2[128];
 static uint32_t stack_3[128];
 
+
 int main(void)
 {
-  GPIO_Init(&led);
+  GPIOA->MODER = (gpio->port->MODER & ~(0x03 << (2 * 5))) | (0x01 << (2 * 5))
+  // set PA5 as output (LED)
   thread(&Thread_1, stack_1, sizeof(stack_1));
   thread(&Thread_2, stack_2, sizeof(stack_2));
   thread(&Thread_3, stack_3, sizeof(stack_3));
@@ -159,8 +171,8 @@ static void Thread_1(void)
 {
   while(1) {
     for(int i = 0; i < 8; i++) {
-      GPIO_Tgl(&led);
-      sleep(250);
+      GPIOA->ODR ^= (1 << 5); // toggle LED (blinking)
+      sleep(250); // 4 x 250ms
     }
     let();
   }
@@ -170,8 +182,8 @@ static void Thread_2(void)
 {
   while(1) {
     for(int i = 0; i < 14; i++) {
-      GPIO_Tgl(&led);
-      sleep(100);
+      GPIOA->ODR ^= (1 << 5); // toggle LED (blinking)
+      sleep(100); // 7 x 100ms
     }
     let();
   }
@@ -181,8 +193,8 @@ static void Thread_3(void)
 {
   while(1) {
     for(int i = 0; i < 4; i++) {
-      GPIO_Tgl(&led);
-      sleep(500);
+      GPIOA->ODR ^= (1 << 5); // toggle LED (blinking)
+      sleep(500); // 2 x 500ms
     }
     let();
   }
@@ -200,16 +212,15 @@ static void Thread_1(void);
 static void Thread_2(void);
 static void Thread_3(void);
 
-GPIO_t led_1 = { .port = GPIOA, .pin = 5, .mode = GPIO_Mode_Output };
-GPIO_t led_2 = { .port = GPIOA, .pin = 6, .mode = GPIO_Mode_Output };
-GPIO_t led_3 = { .port = GPIOA, .pin = 7, .mode = GPIO_Mode_Output };
-
 static uint32_t stack_1[128];
 static uint32_t stack_2[128];
 static uint32_t stack_3[128];
 
 int main(void)
 {
+  GPIOA->MODER &= ~((0x03 << (2 * 5)) | (0x03 << (2 * 6)) | (0x03 << (2 * 7)))
+  GPIOA->MODER |= (0x01 << (2 * 5)) | (0x01 << (2 * 6)) | (0x01 << (2 * 7))
+  // set PA5, PA6, PA7 as output (LEDs)
   thread(&Thread_1, stack_1, sizeof(stack_1));
   thread(&Thread_2, stack_2, sizeof(stack_2));
   thread(&Thread_3, stack_3, sizeof(stack_3));
@@ -219,11 +230,10 @@ int main(void)
 
 static void Thread_1(void)
 {
-  GPIO_Init(&led_1);
   while(1) {
     for(int i = 0; i < 8; i++) {
-      GPIO_Tgl(&led_1);
-      sleep(250);
+      GPIOA->ODR ^= (1 << 5); // PA5 toggle LED (blinking)
+      delay(250); // 4 x 250ms
     }
     let();
   }
@@ -231,11 +241,10 @@ static void Thread_1(void)
 
 static void Thread_2(void)
 {
-  GPIO_Init(&led_2);
   while(1) {
     for(int i = 0; i < 14; i++) {
-      GPIO_Tgl(&led_2);
-      sleep(100);
+      GPIOA->ODR ^= (1 << 6); // PA6 toggle LED (blinking)
+      delay(100); // 7 x 100ms
     }
     let();
   }
@@ -243,11 +252,10 @@ static void Thread_2(void)
 
 static void Thread_3(void)
 {
-  GPIO_Init(&led_3);
   while(1) {
     for(int i = 0; i < 4; i++) {
-      GPIO_Tgl(&led_3);
-      sleep(500);
+      GPIOA->ODR ^= (1 << 7); // PA7 toggle LED (blinking)
+      delay(500); // 2 x 500ms
     }
     let();
   }
