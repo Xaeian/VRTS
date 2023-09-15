@@ -1,4 +1,6 @@
-![baner](img/baner.png)
+# Welcome
+
+![banner](img/banner.png)
 
 A Tiny library [**VRTS**](src/) _(Voluntary Release Threads System)_ using the _cooperative multitasking_ method to write multi-threaded applications as simple as possible for STM32 microcontrollers with cores M4, M3, CM0+. It can be an alternative to an **RTOS** (Real-Time Operating System), in which thread switching occurs at fixed time intervals. In [VRTS](src/) , individual threads determine when to release work, providing us with greater control over the program and resulting in safer code.
 
