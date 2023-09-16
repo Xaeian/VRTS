@@ -8,7 +8,7 @@ volatile VRTS_Task_t *vrts_next_thread;
 #if(VRTS_SWITCHING)
 
 struct {
-  VRTS_Task_t threads[VRTS_TASK_LIMIT];
+  VRTS_Task_t threads[VRTS_THREAD_LIMIT];
   uint32_t thread_nbr;
   uint32_t size;
   bool enabled;
@@ -23,7 +23,7 @@ static void VRTS_TaskFinished(void)
 
 bool thread(void (*handler)(void), uint32_t *stack, uint16_t size)
 {
-  if(vrts_state.size >= VRTS_TASK_LIMIT - 1) return false;
+  if(vrts_state.size >= VRTS_THREAD_LIMIT - 1) return false;
   VRTS_Task_t *thread = &vrts_state.threads[vrts_state.size];
   thread->handler = handler;
   thread->stack = (uint32_t)(stack + size - 16);

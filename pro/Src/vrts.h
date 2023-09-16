@@ -7,8 +7,8 @@
 #include <string.h>
 #include "stm32g0xx.h"
 
-#ifndef VRTS_TASK_LIMIT
-  #define VRTS_TASK_LIMIT 12
+#ifndef VRTS_THREAD_LIMIT
+  #define VRTS_THREAD_LIMIT 12
 #endif
 
 #ifndef VRTS_SWITCHING

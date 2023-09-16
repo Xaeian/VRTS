@@ -144,7 +144,7 @@ int main(void) {
 
 # Examples
 
-In the example, a single LED blinks at a different time in each thread
+In the [example](/pro/Src/main.c), a single LED blinks at a different time in each thread
 
 ```c
 #include "stm32g0xx.h"
