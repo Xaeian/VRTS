@@ -2,7 +2,7 @@
 
 [vrts.h](./vrts.h) - Header file
 
-```
+```cpp
 #ifndef VRTS_H
 #define VRTS_H
 
@@ -193,7 +193,7 @@ void SysTick_Handler(void)
 
 [vrts-pendsv.s](./vrts-pendsv.s) - Assembler file, which includes function for thread switching
 
-```
+```s
 .syntax unified
 .cpu cortex-m0plus
 .fpu softvfp
