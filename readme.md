@@ -104,7 +104,7 @@ void Thread(void)
 Development work can be carried out on a single thread
 
 ```c
-#define VRTS_SWITCHING 0
+#define VRTS_SWITCHING 0 // inside main.h
 
 int main(void) {
   ROOT_Init(&root);
@@ -121,7 +121,7 @@ int main(void) {
 and eventually all threads can be transferred to the system.
 
 ```c
-#define VRTS_SWITCHING 1
+#define VRTS_SWITCHING 1 // inside main.h
 
 static uint32_t main_stack[128];
 static uint32_t temp_stack[128];
@@ -131,7 +131,7 @@ static uint32_t fuse_stack[128];
 
 int main(void) {
   ROOT_Init(&root);
-  SYSTICK_Init(10);
+  SYSTICK_Init(10); // basetime 10ms
   thread(MAIN_Thread, main_stack, sizeof(main_stack));
   thread(TEMP_Thread, temp_stack, sizeof(temp_stack));
   thread(ADC_Thread, adc_stack, sizeof(adc_stack));
@@ -148,8 +148,7 @@ In the example, a single LED blinks at a different time in each thread
 
 ```c
 #include "stm32g0xx.h"
-#include "rtos.h"
-#include "gpio.h"
+#include "sys/vrts.h"
 
 static void Thread_1(void);
 static void Thread_2(void);
@@ -162,12 +161,14 @@ static uint32_t stack_3[128];
 
 int main(void)
 {
-  GPIOA->MODER = (gpio->port->MODER & ~(0x03 << (2 * 5))) | (0x01 << (2 * 5))
+  RCC->IOPENR |= RCC_IOPSMENR_GPIOASMEN;
+  GPIOA->MODER = (GPIOA->MODER & ~(0x03 << (2 * 5))) | (0x01 << (2 * 5));
   // set PA5 as output (LED)
+  SYSTICK_Init(10); // basetime 10ms
   thread(&Thread_1, stack_1, sizeof(stack_1));
   thread(&Thread_2, stack_2, sizeof(stack_2));
   thread(&Thread_3, stack_3, sizeof(stack_3));
-  RTOS_Init(10); // 10ms
+  VRTS_Init();
   while(1);
 }
 
@@ -209,8 +210,7 @@ In this example, three LEDs flash independently, each in its own thread
 
 ```c
 #include "stm32g0xx.h"
-#include "rtos.h"
-#include "gpio.h"
+#include "sys/vrts.h"
 
 static void Thread_1(void);
 static void Thread_2(void);
@@ -222,13 +222,15 @@ static uint32_t stack_3[128];
 
 int main(void)
 {
-  GPIOA->MODER &= ~((0x03 << (2 * 5)) | (0x03 << (2 * 6)) | (0x03 << (2 * 7)))
-  GPIOA->MODER |= (0x01 << (2 * 5)) | (0x01 << (2 * 6)) | (0x01 << (2 * 7))
+  RCC->IOPENR |= RCC_IOPSMENR_GPIOASMEN;
+  GPIOA->MODER &= ~((0x03 << (2 * 5)) | (0x03 << (2 * 6)) | (0x03 << (2 * 7)));
+  GPIOA->MODER |= (0x01 << (2 * 5)) | (0x01 << (2 * 6)) | (0x01 << (2 * 7));
   // set PA5, PA6, PA7 as output (LEDs)
+  SYSTICK_Init(10); // basetime 10ms
   thread(&Thread_1, stack_1, sizeof(stack_1));
   thread(&Thread_2, stack_2, sizeof(stack_2));
   thread(&Thread_3, stack_3, sizeof(stack_3));
-  RTOS_Init(10); // 10ms
+  VRTS_Init();
   while(1);
 }
 
