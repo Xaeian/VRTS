@@ -1,0 +1,31 @@
+{
+  "version": "0.2.0",
+  "tasks": [
+    {
+      "label": "make",
+      "type": "shell",
+      "command": "make",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ],
+  "configurations": [
+    {
+      "name": "Debug",
+      "cwd": "${workspaceRoot}",
+      "executable": "./build/vrts-project.elf",
+      "request": "launch",
+      "type": "cortex-debug",
+      "servertype": "openocd",
+      "device": "STM32G081RB",
+      "configFiles": [
+        "interface/stlink.cfg",
+        "target/stm32g0x.cfg"
+      ],
+      "svdFile": "./inc/ST/stm32g081.svd",
+      "preLaunchTask": "make"
+    }
+  ]
+}

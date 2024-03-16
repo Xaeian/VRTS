@@ -1,0 +1,26 @@
+{
+  "configurations": [
+    {
+      "name": "vrts-project",
+      "includePath": [
+        "${workspaceFolder}/**"
+      ],
+      "defines": [
+        "_DEBUG",
+        "UNICODE",
+        "_UNICODE",
+        "STM32G081xx"
+      ],
+      "cStandard": "c11",
+      "cppStandard": "c++17",
+      "intelliSenseMode": "gcc-arm",
+      "compilerPath": "${env:ARMGCC}/arm-none-eabi-gcc.exe",
+      "compilerArgs": [
+        "-mcpu=cortex-m0plus",
+        "-mthumb"
+      ],
+      "configurationProvider": "ms-vscode.makefile-tools"
+    }
+  ],
+  "version": 4
+}

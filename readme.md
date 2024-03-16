@@ -148,7 +148,7 @@ In the [example](/pro/Src/main.c), a single LED blinks at a different time in ea
 
 ```c
 #include "stm32g0xx.h"
-#include "sys/vrts.h"
+#include "vrts.h"
 
 static void Thread_1(void);
 static void Thread_2(void);
@@ -210,7 +210,7 @@ In this example, three LEDs flash independently, each in its own thread
 
 ```c
 #include "stm32g0xx.h"
-#include "sys/vrts.h"
+#include "vrts.h"
 
 static void Thread_1(void);
 static void Thread_2(void);
