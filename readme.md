@@ -13,12 +13,17 @@ A Tiny library [**VRTS**](src/) _(Voluntary Release Threads System)_ using the _
 The `thread` function allows you to add new threads
 
 ```c
-SYSTICK_Init(10); // 10ms
-ROOT_Init(&root);
-APP_Init();
-thread(&Thread_1, stack_1, sizeof(stack_1));
-thread(&Thread_2, stack_2, sizeof(stack_2));
-VRTS_Init();
+#include "vrts.h"
+
+int main(void)
+{
+  SYSTEM_Init();
+  SYSTICK_Init(10); // 10ms
+  thread(&Thread_1, stack_1, sizeof(stack_1));
+  thread(&Thread_2, stack_2, sizeof(stack_2));
+  VRTS_Init();
+  while(1);
+}
 ```
 
 The `let` function releases the core, allowing another thread to work
@@ -60,7 +65,7 @@ Requires a callback function that returns the free release flag. You can pass th
 
 ```c
 ADC_Measurement(&adc); // start
-uint8_t err = timeout(50, (void *)ADC_IsFree, &adc); // 50ms
+uint8_t err = timeout(50, WAIT_&ADC_IsFree, &adc); // 50ms
 if(err) {
   // message handling
 }
@@ -107,7 +112,7 @@ Development work can be carried out on a single thread
 #define VRTS_SWITCHING 0 // inside main.h
 
 int main(void) {
-  ROOT_Init(&root);
+  SYSTEM_Init();
   SYSTICK_Init(10);
   MAIN_Thread();
   // TEMP_Thread();
@@ -130,7 +135,7 @@ static uint32_t fan_stack[128];
 static uint32_t fuse_stack[128];
 
 int main(void) {
-  ROOT_Init(&root);
+  SYSTEM_Init();
   SYSTICK_Init(10); // basetime 10ms
   thread(MAIN_Thread, main_stack, sizeof(main_stack));
   thread(TEMP_Thread, temp_stack, sizeof(temp_stack));
@@ -147,7 +152,6 @@ int main(void) {
 In the [example](/pro/Src/main.c), a single LED blinks at a different time in each thread
 
 ```c
-#include "stm32g0xx.h"
 #include "vrts.h"
 
 static void Thread_1(void);
@@ -209,7 +213,6 @@ static void Thread_3(void)
 In this example, three LEDs flash independently, each in its own thread
 
 ```c
-#include "stm32g0xx.h"
 #include "vrts.h"
 
 static void Thread_1(void);
