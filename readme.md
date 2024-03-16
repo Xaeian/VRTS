@@ -17,11 +17,11 @@ The `thread` function allows you to add new threads
 
 int main(void)
 {
-  SYSTEM_Init();
-  SYSTICK_Init(10); // 10ms
-  thread(&Thread_1, stack_1, sizeof(stack_1));
-  thread(&Thread_2, stack_2, sizeof(stack_2));
-  VRTS_Init();
+  SYSTEM_Init(); // Your custom init function
+  SYSTICK_Init(10); // Initiating the system clock with a 10ms base.
+  thread(&Thread_1, stack_1, sizeof(stack_1)); // Add thread 1 with stack
+  thread(&Thread_2, stack_2, sizeof(stack_2)); // Add thread 2 with stack
+  VRTS_Init(); // Start the VRTS
   while(1);
 }
 ```
