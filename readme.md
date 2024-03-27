@@ -225,10 +225,12 @@ static uint32_t stack_3[128];
 
 int main(void)
 {
-  RCC->IOPENR |= RCC_IOPSMENR_GPIOASMEN;
-  GPIOA->MODER &= ~((0x03 << (2 * 5)) | (0x03 << (2 * 6)) | (0x03 << (2 * 7)));
-  GPIOA->MODER |= (0x01 << (2 * 5)) | (0x01 << (2 * 6)) | (0x01 << (2 * 7));
-  // set PA5, PA6, PA7 as output (LEDs)
+  RCC->IOPENR |= RCC_IOPSMENR_GPIOASMEN | RCC_IOPSMENR_GPIOCSMEN;
+  GPIOA->MODER &= ~((0x03 << (2 * 12)) | (0x03 << (2 * 11)));
+  GPIOC->MODER &= ~(0x03 << (2 * 7));
+  GPIOA->MODER |= (0x01 << (2 * 12)) | (0x01 << (2 * 11));
+  GPIOC->MODER |= (0x01 << (2 * 7));
+  // set PA12, PA11, PC7 as output (LEDs)
   SYSTICK_Init(10); // basetime 10ms
   thread(&Thread_1, stack_1, sizeof(stack_1));
   thread(&Thread_2, stack_2, sizeof(stack_2));
@@ -241,7 +243,7 @@ static void Thread_1(void)
 {
   while(1) {
     for(int i = 0; i < 8; i++) {
-      GPIOA->ODR ^= (1 << 5); // PA5 toggle LED (blinking)
+      GPIOA->ODR ^= (1 << 12); // PA12 toggle LED (blinking)
       delay(250); // 4 x 250ms
     }
     let();
@@ -252,7 +254,7 @@ static void Thread_2(void)
 {
   while(1) {
     for(int i = 0; i < 14; i++) {
-      GPIOA->ODR ^= (1 << 6); // PA6 toggle LED (blinking)
+      GPIOA->ODR ^= (1 << 11); // PA11 toggle LED (blinking)
       delay(100); // 7 x 100ms
     }
     let();
@@ -263,7 +265,7 @@ static void Thread_3(void)
 {
   while(1) {
     for(int i = 0; i < 4; i++) {
-      GPIOA->ODR ^= (1 << 7); // PA7 toggle LED (blinking)
+      GPIOC->ODR ^= (1 << 7); // PC7 toggle LED (blinking)
       delay(500); // 2 x 500ms
     }
     let();
