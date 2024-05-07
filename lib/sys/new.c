@@ -8,7 +8,7 @@
 uint16_t new_size;
 
 void *aloc_var[ALOC_COUNT_LIMIT];
-uint16_t aloc_size[ALOC_COUNT_LIMIT];\
+uint16_t aloc_size[ALOC_COUNT_LIMIT];
 
 //-------------------------------------------------------------------------------------------------
 
@@ -22,6 +22,8 @@ void *new_static(size_t size)
 void NEW_Init(uint8_t thread_nbr)
 {
   NEW_t *new_stack = new_static(sizeof(NEW_t));
+  new_stack->count = 0;
+  new_stack->size = 0;
   new_stacks[thread_nbr] = new_stack;
 }
 #endif
@@ -70,7 +72,6 @@ void clear()
   }
 }
 
-
 void *aloc(size_t size)
 {
   uint16_t i = 0;
@@ -88,14 +89,14 @@ void *aloc(size_t size)
   return pointer;
 }
 
-void dloc(void *pointer)
+void dloc(void **pointer)
 {
   if(!pointer) return;
   uint16_t i = 0;
   while(i < ALOC_COUNT_LIMIT) {
-    if(pointer == aloc_var[i]) {
-      free(pointer);
-      pointer = NULL;
+    if(*pointer == aloc_var[i]) {
+      free(*pointer);
+      *pointer = NULL;
       new_size -= aloc_size[i];
       aloc_size[i] = 0;
       aloc_var[i] = NULL;
