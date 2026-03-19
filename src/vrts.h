@@ -45,12 +45,11 @@
 
 /**
  * @brief Struct to represent a thread in VRTS.
- * Internal:
- * @param _stack Saved stack pointer (top of context frame).
+ * @param stack Saved stack pointer (top of context frame).
  * @param handler Thread entry function.
  */
 typedef struct {
-  volatile uint32_t _stack;
+  volatile uint32_t stack;
   void (*handler)(void);
 } VRTS_Task_t;
 
