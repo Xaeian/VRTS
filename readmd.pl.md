@@ -9,7 +9,7 @@ Aplikacje embedded muszą obsługiwać wiele zadań jednocześnie: odczyt czujni
 **Jednowątkowe**
 
 - ➡️**Sekwencyjne**: blokuje na każdej operacji. Proste, ale CPU czeka bezczynnie na ADC, UART, timery.
-- ⏩**Reaktywne** (zdarzeniowe): przerwania i callbacki trzymają CPU zajętym, ale logika rozprasza się po handlerach. Biblioteki stają się silnie powiązane z aplikacją.
+- ⏩**Reaktywne** _(zdarzeniowe)_: przerwania i callbacki trzymają CPU zajętym, ale logika rozprasza się po handlerach. Biblioteki stają się silnie powiązane z aplikacją.
 
 **Wielowątkowe**
 

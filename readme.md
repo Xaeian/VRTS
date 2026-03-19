@@ -9,7 +9,7 @@ Embedded applications need to handle multiple tasks at once: reading sensors, co
 **Single-threaded**
 
 - ➡️**Sequential**: blocks on every operation. Simple, but the CPU sits idle while waiting for ADC, UART, timers.
-- ⏩**Reactive** (event-driven): interrupts and callbacks keep the CPU busy, but logic fragments across handlers. Libraries become tightly coupled to the application.
+- ⏩**Reactive** _(event-driven)_: interrupts and callbacks keep the CPU busy, but logic fragments across handlers. Libraries become tightly coupled to the application.
 
 **Multi-threaded**
 
