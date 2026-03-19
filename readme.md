@@ -7,15 +7,18 @@
 Embedded applications need to handle multiple tasks at once: reading sensors, communicating, controlling outputs. How you structure that has a big impact on complexity and resource use.
 
 **Single-threaded**
+
 - ➡️**Sequential**: blocks on every operation. Simple, but the CPU sits idle while waiting for ADC, UART, timers.
 - ⏩**Reactive** (event-driven): interrupts and callbacks keep the CPU busy, but logic fragments across handlers. Libraries become tightly coupled to the application.
 
 **Multi-threaded**
+
 - 🔀**VRTS**: threads yield the CPU voluntarily. No preemption, predictable execution, minimal overhead. Develop and test each thread in isolation, then register them.
 - 🔁**RTOS** _(FreeRTOS)_: preemptive, fixed time slices. Powerful but adds overhead, requires mutexes and careful handling of shared memory.
 - 🪁**Zephyr** : full microkernel RTOS with hardware abstraction layer. Scales to complex systems, significantly larger footprint.
 
 **Operating systems**
+
 - 🐧**Yocto**: Linux-based, full OS stack. Requires MMU, orders of magnitude more resources. For application processors, not microcontrollers.
 
 <table>
@@ -33,7 +36,7 @@ Embedded applications need to handle multiple tasks at once: reading sensors, co
   </tr>
   <tr>
     <td width="50%" align="center">RTOS</td>
-    <td width="50%" align="center">VRTS</td>
+    <td width="50%" align="center"><b>VRTS</b></td>
   </tr>
 </table>
 
@@ -59,14 +62,14 @@ flowchart LR
 
 Subjective comparison of embedded programming approaches.
 
-| Metric                    | Sequential | Reactive | VRTS  | RTOS  | 🪁 Zephyr | 🐧 Yocto |
-| :------------------------ | :--------: | :------: | :---: | :---: | :------: | :-----: |
-| RAM & Flash footprint     |    🟢🟢🟢     |   🟢🟢🟢    |  🟢🟢   |  🟡🟡   |    🟡     |    🔴    |
-| Scalability               |     🔴      |    🟡     |  🟡🟡   |  🟢🟢   |   🟢🟢🟢    |   🟢🟢🟢   |
-| Ease of use               |    🟢🟢🟢     |    🟡🟡    |  🟢🟢   |   🟡   |    🟡     |    🔴    |
-| Code readability          |    🟢🟢🟢     |    🟡     |  🟢🟢🟢  |  🟡🟡   |    🟢🟢    |   🟡🟡    |
-| No synchronization needed |    🟢🟢🟢     |   🟢🟢🟢    |  🟢🟢   |   🟡   |    🟡     |    🟡    |
-| Ecosystem & community     |     🟡      |    🟢🟢    |   🔴   |  🟢🟢🟢  |    🟢🟢    |   🟢🟢🟢   |
+| Metric | Sequential | Reactive | VRTS | RTOS | 🪁 Zephyr | 🐧 Yocto |
+| :----- | :---: | :---: | :---: | :---: | :---: | :---: |
+| RAM & Flash footprint | 🟢🟢🟢 | 🟢🟢🟢 | 🟢🟢 | 🟡🟡 | 🟡 | 🔴 |
+| Scalability | 🔴 | 🟡 | 🟡🟡 | 🟢🟢 | 🟢🟢🟢 | 🟢🟢🟢 |
+| Ease of use | 🟢🟢🟢 | 🟡🟡 | 🟢🟢 | 🟡 | 🟡 | 🔴 |
+| Code readability | 🟢🟢🟢 | 🟡 | 🟢🟢🟢 | 🟡🟡 | 🟢🟢 | 🟡🟡 |
+| No synchronization needed | 🟢🟢🟢 | 🟢🟢🟢 | 🟢🟢 | 🟡 | 🟡 | 🟡 |
+| Ecosystem & community | 🟡 | 🟢🟢 | 🔴 | 🟢🟢🟢 | 🟢🟢 | 🟢🟢🟢 |
 
 ## 🚀 Getting Started
 
