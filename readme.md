@@ -2,10 +2,6 @@
 
 **VRTS** _(Voluntary Release Threads System)_ is a lightweight cooperative multitasking library for STM32 _(CM0+, CM4F)_ and desktop simulation _(Linux, Windows)_. Unlike RTOS, threads are never interrupted, each one decides when to hand off the CPU. This makes code easier to reason about, and lets you develop and test in a single thread, then drop into multi-threaded execution with minimal changes.
 
-| RTOS                  | VRTS                  |
-| --------------------- | --------------------- |
-| ![rtos](img/rtos.png) | ![vrts](img/vrts.png) |
-
 ## 💡 Concepts
 
 Embedded applications need to handle multiple tasks at once: reading sensors, communicating, controlling outputs. How you structure that has a big impact on complexity and resource use.
@@ -21,6 +17,25 @@ Embedded applications need to handle multiple tasks at once: reading sensors, co
 
 **Operating systems**
 - 🐧**Yocto**: Linux-based, full OS stack. Requires MMU, orders of magnitude more resources. For application processors, not microcontrollers.
+
+<table>
+  <tr>
+    <td width="50%"><img src="img/seq.png"/></td>
+    <td width="50%"><img src="img/react.png"/></td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">Sequential</td>
+    <td width="50%" align="center">Reactive</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="img/rtos.png"/></td>
+    <td width="50%"><img src="img/vrts.png"/></td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">RTOS</td>
+    <td width="50%" align="center">VRTS</td>
+  </tr>
+</table>
 
 ```mermaid
 flowchart LR
@@ -44,14 +59,14 @@ flowchart LR
 
 Subjective comparison of embedded programming approaches.
 
-| Metric | Sequential | Reactive | VRTS | RTOS | 🪁 Zephyr | 🐧 Yocto |
-| :----- | :---: | :---: | :---: | :---: | :---: | :---: |
-| RAM & Flash footprint | 🟢🟢🟢 | 🟢🟢🟢 | 🟢🟢 | 🟡🟡 | 🟡 | 🔴 |
-| Scalability | 🔴 | 🟡 | 🟡🟡 | 🟢🟢 | 🟢🟢🟢 | 🟢🟢🟢 |
-| Ease of use | 🟢🟢🟢 | 🟡🟡 | 🟢🟢 | 🟡 | 🟡 | 🔴 |
-| Code readability | 🟢🟢🟢 | 🟡 | 🟢🟢🟢 | 🟡🟡 | 🟡🟡 | 🟡🟡 |
-| No synchronization needed | 🟢🟢🟢 | 🟢🟢🟢 | 🟢🟢 | 🟡 | 🟡 | 🟡 |
-| Ecosystem & community | 🟡 | 🟢🟢 | 🔴 | 🟢🟢🟢 | 🟢🟢 | 🟢🟢🟢 |
+| Metric                    | Sequential | Reactive | VRTS  | RTOS  | 🪁 Zephyr | 🐧 Yocto |
+| :------------------------ | :--------: | :------: | :---: | :---: | :------: | :-----: |
+| RAM & Flash footprint     |    🟢🟢🟢     |   🟢🟢🟢    |  🟢🟢   |  🟡🟡   |    🟡     |    🔴    |
+| Scalability               |     🔴      |    🟡     |  🟡🟡   |  🟢🟢   |   🟢🟢🟢    |   🟢🟢🟢   |
+| Ease of use               |    🟢🟢🟢     |    🟡🟡    |  🟢🟢   |   🟡   |    🟡     |    🔴    |
+| Code readability          |    🟢🟢🟢     |    🟡     |  🟢🟢🟢  |  🟡🟡   |    🟢🟢    |   🟡🟡    |
+| No synchronization needed |    🟢🟢🟢     |   🟢🟢🟢    |  🟢🟢   |   🟡   |    🟡     |    🟡    |
+| Ecosystem & community     |     🟡      |    🟢🟢    |   🔴   |  🟢🟢🟢  |    🟢🟢    |   🟢🟢🟢   |
 
 ## 🚀 Getting Started
 
