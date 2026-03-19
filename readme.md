@@ -1,274 +1,237 @@
-# Welcome
-
 ![banner](img/banner.png)
 
-A Tiny library [**VRTS**](src/) _(Voluntary Release Threads System)_ using the _cooperative multitasking_ method to write multi-threaded applications as simple as possible for STM32 microcontrollers with cores M4, M3, CM0+. It can be an alternative to an **RTOS** (Real-Time Operating System), in which thread switching occurs at fixed time intervals. In [VRTS](src/) , individual threads determine when to release work, providing us with greater control over the program and resulting in safer code.
+**VRTS** _(Voluntary Release Threads System)_ is a lightweight cooperative multitasking library for STM32 _(CM0+, CM4F)_ and desktop simulation _(Linux, Windows)_. Unlike RTOS, threads are never interrupted, each one decides when to hand off the CPU. This makes code easier to reason about, and lets you develop and test in a single thread, then drop into multi-threaded execution with minimal changes.
 
 | RTOS                  | VRTS                  |
 | --------------------- | --------------------- |
-| ![rtos](img/rtos.png) | ![rtos](img/vrts.png) |
+| ![rtos](img/rtos.png) | ![vrts](img/vrts.png) |
 
-# Functions
+## 💡 Concepts
 
-The `thread` function allows you to add new threads
+Embedded applications need to handle multiple tasks at once: reading sensors, communicating, controlling outputs. How you structure that has a big impact on complexity and resource use.
+
+**Single-threaded**
+- ➡️**Sequential**: blocks on every operation. Simple, but the CPU sits idle while waiting for ADC, UART, timers.
+- ⏩**Reactive** (event-driven): interrupts and callbacks keep the CPU busy, but logic fragments across handlers. Libraries become tightly coupled to the application.
+
+**Multi-threaded**
+- 🔀**VRTS**: threads yield the CPU voluntarily. No preemption, predictable execution, minimal overhead. Develop and test each thread in isolation, then register them.
+- 🔁**RTOS** _(FreeRTOS)_: preemptive, fixed time slices. Powerful but adds overhead, requires mutexes and careful handling of shared memory.
+- 🪁**Zephyr** : full microkernel RTOS with hardware abstraction layer. Scales to complex systems, significantly larger footprint.
+
+**Operating systems**
+- 🐧**Yocto**: Linux-based, full OS stack. Requires MMU, orders of magnitude more resources. For application processors, not microcontrollers.
+
+```mermaid
+flowchart LR
+  subgraph single["Single-threaded"]
+    SEQ["➡️Sequential<br>blocking"]
+    REA["⏩Reactive<br>event-driven"]
+  end
+  subgraph multi["Multi-threaded"]
+    VRT["🔀<b>VRTS</b><br>cooperative"]
+    RTO["🔁RTOS<br>preemptive"]
+    ZEP["🪁Zephyr<br>microkernel"]
+  end
+  subgraph os["Operating systems"]
+    YOC["🐧Yocto<br>Linux-based"]
+  end
+  single-->multi
+  multi-->os
+```
+
+## 🆚 Comparison
+
+Subjective comparison of embedded programming approaches.
+
+| Metric | Sequential | Reactive | VRTS | RTOS | 🪁 Zephyr | 🐧 Yocto |
+| :----- | :---: | :---: | :---: | :---: | :---: | :---: |
+| RAM & Flash footprint | 🟢🟢🟢 | 🟢🟢🟢 | 🟢🟢 | 🟡🟡 | 🟡 | 🔴 |
+| Scalability | 🔴 | 🟡 | 🟡🟡 | 🟢🟢 | 🟢🟢🟢 | 🟢🟢🟢 |
+| Ease of use | 🟢🟢🟢 | 🟡🟡 | 🟢🟢 | 🟡 | 🟡 | 🔴 |
+| Code readability | 🟢🟢🟢 | 🟡 | 🟢🟢🟢 | 🟡🟡 | 🟡🟡 | 🟡🟡 |
+| No synchronization needed | 🟢🟢🟢 | 🟢🟢🟢 | 🟢🟢 | 🟡 | 🟡 | 🟡 |
+| Ecosystem & community | 🟡 | 🟢🟢 | 🔴 | 🟢🟢🟢 | 🟢🟢 | 🟢🟢🟢 |
+
+## 🚀 Getting Started
+
+All timing functions are based on the `systick_init` base tick. Thread switching and time tracking are tightly integrated: `delay`, `timeout`, and `tick_*` all cooperate with `let` under the hood.
+
+### Setup
+
+```c
+// main.h: override defaults if needed
+#define VRTS_THREAD_LIMIT 5
+#define VRTS_SWITCHING 1
+```
 
 ```c
 #include "vrts.h"
 
+stack(main_stack, 256);
+stack(temp_stack, 128);
+stack(adc_stack,  128);
+
 int main(void)
 {
-  SYSTEM_Init(); // Your custom init function
-  SYSTICK_Init(10); // Initiating the system clock with a 10ms base.
-  thread(&Thread_1, stack_1, sizeof(stack_1)); // Add thread 1 with stack
-  thread(&Thread_2, stack_2, sizeof(stack_2)); // Add thread 2 with stack
-  VRTS_Init(); // Start the VRTS
-  while(1);
+  systick_init(10); // 10ms base tick
+  thread(Main_Thread, main_stack);
+  thread(Temp_Thread, temp_stack);
+  thread(Adc_Thread,  adc_stack);
+  vrts_init(); // does not return
 }
 ```
 
-The `let` function releases the core, allowing another thread to work
+### `let`
+
+Yields the CPU to the next thread. Call it whenever your thread has nothing urgent to do.
 
 ```c
 void UART_Thread(void)
 {
   while(1) {
-    char *msg;
-    size_t len = UART_Read(msg);
+    size_t len = UART_Read(&msg);
     if(len) {
-      // message handling
+      // handle message
     }
-    let();
+    let(); // hand off to next thread
   }
 }
 ```
 
-The `delay` and `sleep` functions wait indicated time before moving on to the next statement. The time in `ms` is taken as an argument...
+### `delay` / `sleep`
 
-`delay` zwalnia rdzeń, pozwanalając innym wątką na pracę
-
-```c
-GPIO_Set(&gpio);
-delay(1000); // 1s
-GPIO_Rst(&gpio);
-```
-
-`sleep` locks the core in a thread, preventing other threads from accepting it
+Both wait for the specified time. `delay` yields to other threads while waiting. `sleep` blocks: no switching occurs.
 
 ```c
 GPIO_Set(&gpio);
-sleep(200); // 200ms
+delay(1000); // 1s: other threads run
 GPIO_Rst(&gpio);
 ```
 
-The `timeout` function specifies the maximum time to complete a certain task.
-Requires a callback function that returns the free release flag. You can pass the function's data structure to the function if required
+```c
+GPIO_Set(&gpio);
+sleep(200); // 200ms: core is locked to this thread
+GPIO_Rst(&gpio);
+```
+
+### `timeout`
+
+Waits for a condition with a deadline. Requires a callback returning `true` when the condition is met. Returns `true` if timed out.
 
 ```c
-ADC_Measurement(&adc); // start
-uint8_t err = timeout(50, WAIT_&ADC_IsFree, &adc); // 50ms
-if(err) {
-  // message handling
+ADC_Start(&adc);
+if(timeout(50, WAIT_&ADC_IsFree, &adc)) {
+  // error: measurement took too long
 }
 else {
   uint16_t value = ADC_Get(&adc, 3); // channel 3
-  // do job
 }
 ```
 
-You can combine `gettick` and `waitfor` to execute a task with a delay
-This allows for delay-triggering operations between threads
+### `tick_keep` + `tick_over`
+
+Schedule a one-shot task across threads. `tick_keep` sets a deadline, `tick_over` fires once when it expires and resets.
 
 ```c
-uint64_t todo;
+uint64_t deadline;
+
 void Thread_1(void)
 {
-  if(!todo) todo = gettick(500); // 500ms
+  if(!deadline) deadline = tick_keep(500); // arm: 500ms from now
+  let();
 }
+
 void Thread_2(void)
 {
-   if(waitfor(&todo)) {
-   // todo job
+  if(tick_over(&deadline)) {
+    // runs once, 500ms after Thread_1 armed it
   }
+  let();
 }
 ```
 
-It is possible to monitor the execution time of the code. To do this, use the `gettick` function in conjunction with `watch`.
+### `tick_keep` + `tick_away`
+
+Poll a deadline continuously. `tick_away` returns `true` while waiting, `false` once expired: then resets.
 
 ```c
-uint64_t stopwatch;
+uint64_t deadline = tick_keep(1000);
+
+while(tick_away(&deadline)) {
+  // do work while time remains
+  let();
+}
+// time's up
+```
+
+### `tick_diff`
+
+Measure elapsed time since a reference tick.
+
+```c
 void Thread(void)
 {
-  stopwatch = gettick(0); // no-offset
-  // calculations...
-  uint32_t time = watch(&stopwatch) // ms
+  uint64_t ref = tick_keep(0); // capture now
+  // ... some calculations ...
+  int32_t elapsed_ms = tick_diff(ref);
 }
 ```
 
-# One/multiple threads
+### Example
 
-Development work can be carried out on a single thread
+Three [**LEDs blink example**](example.c) independently, each in its own thread.
+
+## 📚 Heap
+
+VRTS includes a deterministic heap allocator and a per-thread garbage collector: a drop-in replacement for `malloc`/`free` without the stdlib overhead. Because VRTS is cooperative, a single shared heap is safe: no thread can interrupt another mid-allocation, so no locking is needed. With RTOS this is a real problem: preemption requires either per-thread heaps _(memory overhead)_ or mutexes around every allocation _(complexity and latency)_.
+
+Call `heap_init()` once before use:
 
 ```c
-#define VRTS_SWITCHING 0 // inside main.h
-
-int main(void) {
-  SYSTEM_Init();
-  SYSTICK_Init(10);
-  MAIN_Thread();
-  // TEMP_Thread();
-  // ADC_Thread();
-  // FAN_Thread();
-  // FUSE_Thread();
-  while(1);
-}
+heap_init();
 ```
 
-and eventually all threads can be transferred to the system.
+### Allocator
+
+Standard alloc/free/realloc with block splitting and coalescing.
 
 ```c
-#define VRTS_SWITCHING 1 // inside main.h
-
-static uint32_t main_stack[128];
-static uint32_t temp_stack[128];
-static uint32_t adc_stack[128];
-static uint32_t fan_stack[128];
-static uint32_t fuse_stack[128];
-
-int main(void) {
-  SYSTEM_Init();
-  SYSTICK_Init(10); // basetime 10ms
-  thread(MAIN_Thread, main_stack, sizeof(main_stack));
-  thread(TEMP_Thread, temp_stack, sizeof(temp_stack));
-  thread(ADC_Thread, adc_stack, sizeof(adc_stack));
-  thread(FAN_Thread, fan_stack, sizeof(fan_stack));
-  thread(FUSE_Thread, fuse_stack, sizeof(fuse_stack));
-  VRST_Init();
-  while(1);
-}
+uint8_t *buf = heap_alloc(64);
+// use buf...
+heap_free(buf);
 ```
 
-# Examples
+```c
+buf = heap_reloc(buf, 128); // resize: copies data if needed
+```
 
-In the [example](/pro/Src/main.c), a single LED blinks at a different time in each thread
+Configure in `main.h`:
 
 ```c
-#include "vrts.h"
+#define HEAP_SIZE  8192 // total heap in bytes
+#define HEAP_ALIGN 8    // allocation alignment
+```
 
-static void Thread_1(void);
-static void Thread_2(void);
-static void Thread_3(void);
+### Garbage collector
 
-static uint32_t stack_1[128];
-static uint32_t stack_2[128];
-static uint32_t stack_3[128];
+`heap_new` allocates memory tracked per-thread. `heap_clear` frees everything allocated by the current thread in one call: no manual tracking needed.
 
-
-int main(void)
-{
-  RCC->IOPENR |= RCC_IOPSMENR_GPIOASMEN;
-  GPIOA->MODER = (GPIOA->MODER & ~(0x03 << (2 * 5))) | (0x01 << (2 * 5));
-  // set PA5 as output (LED)
-  SYSTICK_Init(10); // basetime 10ms
-  thread(&Thread_1, stack_1, sizeof(stack_1));
-  thread(&Thread_2, stack_2, sizeof(stack_2));
-  thread(&Thread_3, stack_3, sizeof(stack_3));
-  VRTS_Init();
-  while(1);
-}
-
-static void Thread_1(void)
+```c
+void Uart_Thread(void)
 {
   while(1) {
-    for(int i = 0; i < 8; i++) {
-      GPIOA->ODR ^= (1 << 5); // PA5 toggle LED (blinking)
-      sleep(250); // 4 x 250ms
-    }
-    let();
-  }
-}
-
-static void Thread_2(void)
-{
-  while(1) {
-    for(int i = 0; i < 14; i++) {
-      GPIOA->ODR ^= (1 << 5); // PA5 toggle LED (blinking)
-      sleep(100); // 7 x 100ms
-    }
-    let();
-  }
-}
-
-static void Thread_3(void)
-{
-  while(1) {
-    for(int i = 0; i < 4; i++) {
-      GPIOA->ODR ^= (1 << 5); // PA5 toggle LED (blinking)
-      sleep(500); // 2 x 500ms
-    }
+    char *line = heap_new(64);
+    char *resp = heap_new(128);
+    // use line, resp...
+    heap_clear(); // free all at once
     let();
   }
 }
 ```
 
-In this example, three LEDs flash independently, each in its own thread
+Each thread has its own GC stack: `heap_clear` in one thread does not affect allocations made in another. The stack grows automatically in `HEAP_NEW_BLOCK`-sized steps.
 
 ```c
-#include "vrts.h"
-
-static void Thread_1(void);
-static void Thread_2(void);
-static void Thread_3(void);
-
-static uint32_t stack_1[128];
-static uint32_t stack_2[128];
-static uint32_t stack_3[128];
-
-int main(void)
-{
-  RCC->IOPENR |= RCC_IOPSMENR_GPIOASMEN | RCC_IOPSMENR_GPIOCSMEN;
-  GPIOA->MODER &= ~((0x03 << (2 * 12)) | (0x03 << (2 * 11)));
-  GPIOC->MODER &= ~(0x03 << (2 * 7));
-  GPIOA->MODER |= (0x01 << (2 * 12)) | (0x01 << (2 * 11));
-  GPIOC->MODER |= (0x01 << (2 * 7));
-  // set PA12, PA11, PC7 as output (LEDs)
-  SYSTICK_Init(10); // basetime 10ms
-  thread(&Thread_1, stack_1, sizeof(stack_1));
-  thread(&Thread_2, stack_2, sizeof(stack_2));
-  thread(&Thread_3, stack_3, sizeof(stack_3));
-  VRTS_Init();
-  while(1);
-}
-
-static void Thread_1(void)
-{
-  while(1) {
-    for(int i = 0; i < 8; i++) {
-      GPIOA->ODR ^= (1 << 12); // PA12 toggle LED (blinking)
-      delay(250); // 4 x 250ms
-    }
-    let();
-  }
-}
-
-static void Thread_2(void)
-{
-  while(1) {
-    for(int i = 0; i < 14; i++) {
-      GPIOA->ODR ^= (1 << 11); // PA11 toggle LED (blinking)
-      delay(100); // 7 x 100ms
-    }
-    let();
-  }
-}
-
-static void Thread_3(void)
-{
-  while(1) {
-    for(int i = 0; i < 4; i++) {
-      GPIOC->ODR ^= (1 << 7); // PC7 toggle LED (blinking)
-      delay(500); // 2 x 500ms
-    }
-    let();
-  }
-}
+#define HEAP_NEW_BLOCK 16 // growth step (number of tracked pointers)
 ```

@@ -1,8 +1,0 @@
-{
-  "files.associations": {
-    "*.h": "c"
-  },
-  "editor.tabSize": 2,
-  "editor.insertSpaces": true,
-  "editor.mouseWheelZoom": true
-}
