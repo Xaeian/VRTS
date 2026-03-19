@@ -65,6 +65,7 @@ Subjective comparison of embedded programming approaches.
 | Metric | Sequential | Reactive | VRTS | RTOS | 🪁 Zephyr | 🐧 Yocto |
 | :----- | :---: | :---: | :---: | :---: | :---: | :---: |
 | RAM & Flash footprint | 🟢🟢🟢 | 🟢🟢🟢 | 🟢🟢 | 🟡🟡 | 🟡 | 🔴 |
+| Responsiveness | 🔴 | 🟢🟢 | 🟢🟢 | 🟢🟢🟢 | 🟢🟢🟢 | 🟡🟡 |
 | Scalability | 🔴 | 🟡 | 🟡🟡 | 🟢🟢 | 🟢🟢🟢 | 🟢🟢🟢 |
 | Ease of use | 🟢🟢🟢 | 🟡🟡 | 🟢🟢 | 🟡 | 🟡 | 🔴 |
 | Code readability | 🟢🟢🟢 | 🟡 | 🟢🟢🟢 | 🟡🟡 | 🟢🟢 | 🟡🟡 |

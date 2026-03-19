@@ -65,6 +65,7 @@ Subiektywne porównanie podejść do programowania embedded.
 | Metryka | Sekwencyjne | Reaktywne | VRTS | RTOS | 🪁 Zephyr | 🐧 Yocto |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
 | Zużycie RAM i Flash | 🟢🟢🟢 | 🟢🟢🟢 | 🟢🟢 | 🟡🟡 | 🟡 | 🔴 |
+| Reaktywność | 🔴 | 🟢🟢 | 🟢🟢 | 🟢🟢🟢 | 🟢🟢🟢 | 🟡🟡 |
 | Skalowalność | 🔴 | 🟡 | 🟡🟡 | 🟢🟢 | 🟢🟢🟢 | 🟢🟢🟢 |
 | Łatwość użycia | 🟢🟢🟢 | 🟡🟡 | 🟢🟢 | 🟡 | 🟡 | 🔴 |
 | Czytelność kodu | 🟢🟢🟢 | 🟡 | 🟢🟢🟢 | 🟡🟡 | 🟢🟢 | 🟡🟡 |
