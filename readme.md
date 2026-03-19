@@ -68,8 +68,8 @@ Subjective comparison of embedded programming approaches.
 | Scalability | 🔴 | 🟡 | 🟡🟡 | 🟢🟢 | 🟢🟢🟢 | 🟢🟢🟢 |
 | Ease of use | 🟢🟢🟢 | 🟡🟡 | 🟢🟢 | 🟡 | 🟡 | 🔴 |
 | Code readability | 🟢🟢🟢 | 🟡 | 🟢🟢🟢 | 🟡🟡 | 🟢🟢 | 🟡🟡 |
-| No synchronization needed | 🟢🟢🟢 | 🟢🟢🟢 | 🟢🟢 | 🟡 | 🟡 | 🟡 |
-| Ecosystem & community | 🟡 | 🟢🟢 | 🔴 | 🟢🟢🟢 | 🟢🟢 | 🟢🟢🟢 |
+| No synchronization needed | 🟢🟢🟢 | 🟢🟢🟢 | 🟢🟢 | 🟡 | 🟡 | 🟡🟡 |
+| Ecosystem & community | 🟢🟢 | 🟡🟡 | 🟡 | 🟢🟢🟢 | 🟢🟢 | 🟢🟢🟢 |
 
 ## 🚀 Getting Started
 
