@@ -1,92 +1,79 @@
-// lib/col/heap.h
+// src/heap.h
 
 #ifndef HEAP_H_
 #define HEAP_H_
 
-#include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
+#include <stddef.h>
 #include <string.h>
 #include "main.h"
 
-//------------------------------------------------------------------------------------------------- Config
+//------------------------------------------------------------------------------------------ Config
 
 #ifndef HEAP_SIZE
-  // Heap memory region size in bytes
+  // Heap memory region [B]
   #define HEAP_SIZE 8192
 #endif
 
 #ifndef HEAP_ALIGN
-  // Allocation alignment in bytes
+  // Allocation alignment [B]
   #define HEAP_ALIGN 8
 #endif
 
-//------------------------------------------------------------------------------------------------- Allocator
+#ifndef HEAP_NEW_BLOCK
+  // Initial capacity and growth step of a thread's garbage collector list [pointers]
+  #define HEAP_NEW_BLOCK 16
+#endif
 
-/**
- * @brief Heap memory block header.
- * @param size Size of data area in bytes (excluding header)
- * @param next Pointer to next block in `FreeList`
- * @param free `true` if free, `false` if allocated
- */
-typedef struct heap_block {
-  size_t size;
-  struct heap_block *next;
-  bool free;
-} heap_block_t;
+//--------------------------------------------------------------------------------------- Allocator
 
-// Initialize heap — call once before heap_alloc()
+// Initialize heap, call once before `heap_alloc`
 void heap_init(void);
 
 /**
- * @brief Allocate a memory block from the heap.
- * @param[in] size Number of bytes to allocate
- * @return Pointer to allocated memory, or `NULL` if unavailable
+ * @brief Allocate a block. A full heap is a `vrts_panic`, never a `NULL`.
+ * @param[in] size Number of bytes
+ * @return Pointer to the block, aligned to `HEAP_ALIGN`
  */
 void *heap_alloc(size_t size);
 
 /**
- * @brief Reallocate (resize) an existing heap block.
- * @param[in] ptr Pointer returned by `heap_alloc()`, or `NULL`
- * @param[in] size New size in bytes (0 = free)
- * @return Pointer to resized block, or `NULL` if allocation failed
+ * @brief Resize a block, the content is kept.
+ * @param[in] ptr Pointer from `heap_alloc`, `NULL` allocates
+ * @param[in] size New size [B], `0` frees
+ * @return Pointer to the resized block, `NULL` after a free
  */
 void *heap_reloc(void *ptr, size_t size);
 
 /**
- * @brief Free a previously allocated memory block.
- * @param[in] ptr Pointer returned by `heap_alloc()`, or `NULL`
+ * @brief Release a block.
+ * @param[in] ptr Pointer from `heap_alloc`, `NULL` is ignored
  */
 void heap_free(void *ptr);
 
-//------------------------------------------------------------------------------------------------- Garbage-collector
-
-#ifndef HEAP_NEW_BLOCK
-  // Initial and growth step for GC stack capacity
-  #define HEAP_NEW_BLOCK 16
-#endif
+//------------------------------------------------------------------------------- Garbage collector
 
 /**
- * @brief Memory stack for garbage collector, one per thread.
- * @param var Pointers to dynamically allocated variables
- * @param count Current number of variables in use
- * @param limit Current allocated capacity of `var` (auto-expands)
- */
-typedef struct {
-  void **var;
-  uint16_t count;
-  uint16_t limit;
-} heap_new_t;
-
-/**
- * @brief Allocate memory tracked by the garbage collector.
- * @param[in] size Number of bytes to allocate
- * @return Pointer to allocated memory, or `NULL` if allocation failed
+ * @brief Allocate a block owned by the calling thread's garbage collector.
+ *   Every block taken this way goes back with the next `heap_clear` of that thread.
+ * @param[in] size Number of bytes, `0` returns `NULL`
+ * @return Pointer to the block, a full heap is a `vrts_panic` as in `heap_alloc`
  */
 void *heap_new(size_t size);
 
-// Free all GC-tracked memory for the active thread
+// Release every `heap_new` block of the calling thread
 void heap_clear(void);
+
+//-------------------------------------------------------------------------------------- Attributes
+
+// A block of `heap_alloc` goes back through `heap_free` or `heap_reloc`, which `-Wall`
+// and `-fanalyzer` then hold every caller to; each names the others, so they come last.
+// gcc 11 is the first to take a deallocator in `malloc`, an older compiler goes without.
+#if defined(__GNUC__) && __GNUC__ >= 11
+void *heap_alloc(size_t size)
+  __attribute__((malloc(heap_free, 1), malloc(heap_reloc, 1), returns_nonnull));
+void *heap_reloc(void *ptr, size_t size)
+  __attribute__((malloc(heap_free, 1), malloc(heap_reloc, 1)));
+#endif
 
 //-------------------------------------------------------------------------------------------------
 #endif

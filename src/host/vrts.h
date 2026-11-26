@@ -1,12 +1,13 @@
-// hal/host/vrts.h
+// src/host/vrts.h
 
 #ifndef VRTS_H_
 #define VRTS_H_
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "main.h"
 
-//------------------------------------------------------------------------------------------------- Config
+//------------------------------------------------------------------------------------------ Config
 
 #ifndef VRTS_THREAD_LIMIT
   // Max number of threads
@@ -18,113 +19,111 @@
   #define VRTS_SWITCHING 1
 #endif
 
-//------------------------------------------------------------------------------------------------- Macros
+//------------------------------------------------------------------------------------------ Macros
 
-// Type cast for timeout function
+// Cast of a predicate for `timeout`
 #define WAIT_ (bool (*)(void *))
-// Convert seconds to milliseconds
+// Time in milliseconds
 #define seconds(s) (1000 * (s))
-// Convert minutes to milliseconds
 #define minutes(m) (60000 * (m))
-// Wait until `flag` is `true`
+// Yield until `flag` is `true`
 #define wait_for(flag) while(!(flag)) let()
 
-// Stub stack declaration (host uses OS threads, no stack needed)
+// OS threads carry their own stacks, the declaration keeps the target shape
 #define stack(name, size) static uint32_t name[1]
-// Registers a thread (stack ignored on host)
 #define thread(fnc, stack_name) vrts_thread(&fnc, (uint32_t *)stack_name, 0)
 
-//------------------------------------------------------------------------------------------------- Tick
+//-------------------------------------------------------------------------------------------- Tick
 
-// Sets a deadline at current time + offset, returns tick value
+// Deadline `offset_ms` from now, and the current tick
 uint64_t tick_keep(uint32_t offset_ms);
-
-// Returns current system tick
 uint64_t tick_now(void);
 
 /**
- * @brief One-shot expired check — auto-resets `*tick` to 0 on trigger
- * @param[in,out] tick Pointer to deadline set by `tick_keep()`
- * @return `true` once when deadline passes, `false` otherwise
+ * @brief Deadline passed, once; `*tick` is cleared to `0` on the trigger.
+ * @param[in,out] tick Deadline from `tick_keep`
+ * @return `true` once when the deadline passes
  */
-bool tick_over(uint64_t *tick);
+bool tick_over(volatile uint64_t *tick);
 
 /**
- * @brief Continuous pending check — auto-resets `*tick` to 0 on expiry
- * @param[in,out] tick Pointer to deadline set by `tick_keep()`
- * @return `true` while waiting, `false` once expired
+ * @brief Deadline still ahead; `*tick` is cleared to `0` when it passes.
+ * @param[in,out] tick Deadline from `tick_keep`
+ * @return `true` while waiting
  */
-bool tick_away(uint64_t *tick);
+bool tick_away(volatile uint64_t *tick);
 
 /**
- * @brief Elapsed time since reference tick
- * @param[in] tick Reference tick to measure from
- * @return Elapsed time in milliseconds
+ * @brief Time since a tick.
+ * @param[in] tick Reference tick
+ * @return Elapsed time [ms]
  */
 int32_t tick_diff(uint64_t tick);
 
-//------------------------------------------------------------------------------------------------- Delay
+//------------------------------------------------------------------------------------------- Delay
 
-// Delays for `ms` milliseconds, yields to other threads
+// `delay` yields to the other threads, `sleep` holds the thread
 void delay(uint32_t ms);
-
-// Sleeps for `ms` milliseconds, blocks thread switching
 void sleep(uint32_t ms);
 
 /**
- * @brief Polls condition until met or timeout expires
- * @param[in] ms Timeout in milliseconds
- * @param[in] Free Callback returning `true` when condition is met
- * @param[in] subject Pointer passed to `Free`
- * @return `true` if timed out, `false` if condition met
+ * @brief Yield until a predicate holds or the time runs out.
+ * @note The predicate is read once more past the deadline,
+ * so one met while another thread held the processor is no timeout.
+ * @param[in] ms Time limit [ms]
+ * @param[in] Free Predicate, `true` when the wait is over
+ * @param[in] subject Argument of `Free`
+ * @return `true` when the time ran out
  */
 bool timeout(uint32_t ms, bool (*Free)(void *), void *subject);
 
-// Delays until tick reached, yields to other threads. Resets `*tick` to 0
+// Until a deadline from `tick_keep`, cleared to `0` after; `delay` yields, `sleep` holds
 void delay_until(uint64_t *tick);
-
-// Sleeps until tick reached, blocks thread switching. Resets `*tick` to 0
 void sleep_until(uint64_t *tick);
 
-//------------------------------------------------------------------------------------------------- Threads
+//----------------------------------------------------------------------------------------- Threads
 
 /**
- * @brief Registers a new thread
+ * @brief Register a thread, the OS owns its stack.
  * @param[in] handler Thread function
- * @param[in] stack Ignored on host (OS manages stack)
- * @param[in] size Ignored on host
- * @return `true` on success, `false` if thread limit reached
+ * @param[in] stack Ignored
+ * @param[in] size Ignored
+ * @return `true` when registered, `false` at the thread limit
  */
 bool vrts_thread(void (*handler)(void), uint32_t *stack, uint16_t size);
 
-// Yields control to the next thread
+// Hand the core to the next thread
 void let(void);
-
-// Alias for `let()`
 #define yield let
 
-//------------------------------------------------------------------------------------------------- Init
+//-------------------------------------------------------------------------------------------- Init
 
-// Initializes SysTick — call before `vrts_init()`
+// Tick period, before `vrts_init`
 bool systick_init(uint32_t systick_ms);
 
-// Initializes VRTS and starts all threads
+// Start every registered thread, does not return
 void vrts_init(void);
 
-// Disables thread switching
+// Thread switching off and on, `vrts_unlock` reports whether the scheduler runs
 void vrts_lock(void);
-
-// Enables thread switching if VRTS is initialized
 bool vrts_unlock(void);
 
-// Returns index of currently active thread (always 0 on host)
+// Index of the running thread
 uint8_t vrts_active_thread(void);
 
-// Called on fatal VRTS error — weak, override to handle panics
-void vrts_panic(const char *msg);
+// Fatal scheduler error, an application definition replaces the default, and none may return
+void vrts_panic(const char *msg) __attribute__((noreturn));
 
 //-------------------------------------------------------------------------------------------------
 
+// Tick counter. Under `VrtsVirtualTime` the program owns it
 extern volatile uint64_t VrtsTicker;
 
+// Clock source. `false` (default): ticks follow the wall clock.
+// `true`: the program advances `VrtsTicker` itself,
+// so a simulation runs deterministic virtual time
+// as fast as the CPU allows instead of in real seconds
+extern bool VrtsVirtualTime;
+
+//-------------------------------------------------------------------------------------------------
 #endif

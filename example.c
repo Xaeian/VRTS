@@ -1,4 +1,8 @@
-#include "stm32g0xx.h"
+// example.c
+
+// Three LEDs blink apart, each in its own thread: PA12, PA11 and PC7 of a G0 board
+
+#include <stm32g0xx.h>
 #include "vrts.h"
 
 static void Thread_1(void);
@@ -11,13 +15,13 @@ stack(stack_3, 128);
 
 int main(void)
 {
+  // PA12, PA11 and PC7 as outputs
   RCC->IOPENR |= RCC_IOPENR_GPIOAEN | RCC_IOPENR_GPIOCEN;
   GPIOA->MODER &= ~((0x03 << (2 * 12)) | (0x03 << (2 * 11)));
   GPIOC->MODER &= ~(0x03 << (2 * 7));
   GPIOA->MODER |= (0x01 << (2 * 12)) | (0x01 << (2 * 11));
   GPIOC->MODER |= (0x01 << (2 * 7));
-  // set PA12, PA11, PC7 as output (LEDs)
-  systick_init(10); // basetime 10ms
+  systick_init(10); // 10ms base tick
   thread(Thread_1, stack_1);
   thread(Thread_2, stack_2);
   thread(Thread_3, stack_3);
